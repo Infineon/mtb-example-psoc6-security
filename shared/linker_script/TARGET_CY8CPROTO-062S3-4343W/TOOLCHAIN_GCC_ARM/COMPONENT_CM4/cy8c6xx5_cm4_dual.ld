@@ -161,18 +161,6 @@ GROUP(libgcc.a libc.a libm.a libnosys.a)
 
 SECTIONS
 {
-    /* Cortex-M0+ application flash image area */
-    .cy_m0p_image ORIGIN(flash_cm0p) + MCUBOOT_HEADER_SIZE :
-    {
-        . = ALIGN(4);
-        __cy_m0p_code_start = . ;
-        KEEP(*(.cy_m0p_image))
-        __cy_m0p_code_end = . ;
-    } > flash_cm0p
-
-    /* Check if .cy_m0p_image size exceeds CM0P_FLASH_SIZE */
-    ASSERT(__cy_m0p_code_end <= ORIGIN(flash_cm0p) + CM0P_APP_FLASH_SIZE, "CM0+ flash image overflows with CM4, increase CM0P_APP_FLASH_SIZE")
-
     /* Cortex-M4 application flash area */
     .text ORIGIN(flash) :
     {
