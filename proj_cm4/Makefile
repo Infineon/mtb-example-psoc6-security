@@ -169,8 +169,9 @@ DEFINES+=USER_APP_START=$(CM0P_APP_FLASH_START)\
 else
 DEFINES+=USER_APP_START=$(CY_BOOT_SECONDARY_1_START_ADDRESS)\
          USER_APP_SIZE=$(MCUBOOT_SLOT_SIZE)
-endif         
-         
+endif
+# Define the flag to enable RMA
+DEFINES+=TRANSITION_TO_RMA=0
 
 # Select softfp or hardfp floating point. Default is softfp.
 VFP_SELECT=

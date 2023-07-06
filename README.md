@@ -17,13 +17,15 @@ The application template bundles three projects:
 
 - **proj_cm0p** – Implements a blinky LED project run by CM0+ that toggles the user LED at different rates depending on whether it was built in BOOT mode or UPGRADE mode.
 
-- **proj_cm4** – Implements a DFU task to receive firmware updates over UART using FreeRTOS. It also demonstrates the usage of IPCs to request data from the CM0+ project. This application is merged with the *proj_cm0p* image to generate the dual-CPU image to be programmed.
+- **proj_cm4** – This project has two implementations
+   1. Implements a DFU task to receive firmware updates over UART using FreeRTOS. It also demonstrates the usage of IPCs to request data from the CM0+ project. This application is merged with the *proj_cm0p* image to generate the dual-CPU image to be programmed.
 
-   You can build the CM0+ and CM4 user project in one of the following ways:
+         You can build the CM0+ and CM4 user project in one of the following ways:
 
-   - **BOOT mode:** The user image is built to be programmed into the primary slot. The bootloader will simply boot the user image on the next reset.
+      - **BOOT mode:** The user image is built to be programmed into the primary slot. The bootloader will simply boot the user image on the next reset.
 
-   - **UPGRADE mode:** The user image is built to be programmed into the secondary slot. Based on the user input, the bootloader will copy the image into the primary slot and boot it on the next reset.
+      - **UPGRADE mode:** The user image is built to be programmed into the secondary slot. Based on the user input, the bootloader will copy the image into the primary slot and boot it on the next reset.
+   2. Impelments an RMA functionality to transition the device to RMA lifecycle mode. TRANSITION_TO_RMA flag should be set to enable the RMA mode trasition. The DFU task is disabled when this flag is set.
 
 The application template also has files and directories that are of importance such as the following:
 
@@ -32,13 +34,13 @@ The application template also has files and directories that are of importance s
 
 [View this README on GitHub.](https://github.com/Infineon/mtb-example-psoc6-security)
 
-[Provide feedback on this Code Example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzQ5OTIiLCJTcGVjIE51bWJlciI6IjAwMi0zNDk5MiIsIkRvYyBUaXRsZSI6IlBTb0MmdHJhZGU7IDYgTUNVOiBTZWN1cml0eSBhcHBsaWNhdGlvbiB0ZW1wbGF0ZSIsInJpZCI6ImRka2EiLCJEb2MgdmVyc2lvbiI6IjIuMC4wIiwiRG9jIExhbmd1YWdlIjoiRW5nbGlzaCIsIkRvYyBEaXZpc2lvbiI6Ik1DRCIsIkRvYyBCVSI6IklDVyIsIkRvYyBGYW1pbHkiOiJQU09DIn0=)
+[Provide feedback on this Code Example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzQ5OTIiLCJTcGVjIE51bWJlciI6IjAwMi0zNDk5MiIsIkRvYyBUaXRsZSI6IlBTb0MmdHJhZGU7IDYgTUNVOiBTZWN1cml0eSBhcHBsaWNhdGlvbiB0ZW1wbGF0ZSIsInJpZCI6ImRka2EiLCJEb2MgdmVyc2lvbiI6IjMuMC4wIiwiRG9jIExhbmd1YWdlIjoiRW5nbGlzaCIsIkRvYyBEaXZpc2lvbiI6Ik1DRCIsIkRvYyBCVSI6IklDVyIsIkRvYyBGYW1pbHkiOiJQU09DIn0=)
 
 <br>
 
 <details><summary><span style="font-size:1.6em;">Table of contents</span></summary>
 
-- [PSoC™ 6 MCU: Security application template](#psoc-6-mcu-security-application-template)
+- [PSoC&trade; 6 MCU: Security application template](#psoc-6-mcu-security-application-template)
   - [Requirements](#requirements)
   - [Supported toolchains (make variable 'TOOLCHAIN')](#supported-toolchains-make-variable-toolchain)
   - [Supported kits (make variable 'TARGET')](#supported-kits-make-variable-target)
@@ -58,7 +60,7 @@ The application template also has files and directories that are of importance s
       - [Memory layout variables](#memory-layout-variables)
   - [Bootloader implementation](#bootloader-implementation)
     - [MCUboot basics](#mcuboot-basics)
-    - [Swap-based upgrade for PSoC™ 6 MCU](#swap-based-upgrade-for-psoc-6-mcu)
+    - [Swap-based upgrade for PSoC™ 6 MCU](#swap-based-upgrade-for-psoc™-6-mcu)
     - [Flash map/partition](#flash-mappartition)
       - [Customizing the flash map](#customizing-the-flash-map)
     - [Configuring bootloader make variables](#configuring-bootloader-make-variables)
@@ -77,6 +79,7 @@ The application template also has files and directories that are of importance s
     - [Generating a key-pair](#generating-a-key-pair)
       - [Generating an RSA key-pair](#generating-an-rsa-key-pair)
       - [Generating the ECC key-pair](#generating-the-ecc-key-pair)
+  - [Return Merchandise Authorization (RMA) mode](#return-merchandise-authorization-rma-mode)
   - [Pre- and post-build steps](#pre--and-post-build-steps)
     - [Bootloader project: Pre-build steps](#bootloader-project-pre-build-steps)
     - [Bootloader project: Post-build steps](#bootloader-project-post-build-steps)
@@ -94,15 +97,17 @@ The application template also has files and directories that are of importance s
 
 ## Requirements
 
-- [ModusToolbox&trade; software](https://www.infineon.com/cms/en/design-support/tools/sdk/modustoolbox-software/) v3.0 or later (tested with v3.0)
-- PSoC&trade; 6 Board support package (BSP) minimum required version: 4.0.0
+- [ModusToolbox&trade; software](https://www.infineon.com/cms/en/design-support/tools/sdk/modustoolbox-software/) v3.1 or later (tested with v3.1)
+- PSoC&trade; 6 board support package (BSP) minimum required version: 4.0.0
 - Programming language: C
-- [CYPRESS&trade; programmer](https://www.infineon.com/cms/en/design-support/tools/programming-testing/psoc-programming-solutions/)
+- Compiler: GCC
+- openssl 1.0.2 or higher
+- [Cypress&trade; programmer](https://www.infineon.com/cms/en/design-support/tools/programming-testing/psoc-programming-solutions/)
 - Associated parts: All [PSoC&trade; 6 Dual-CPU MCU](https://www.infineon.com/cms/en/product/microcontroller/32-bit-psoc-arm-cortex-microcontroller/psoc-6-32-bit-arm-cortex-m4-mcu/) parts (except PSoC&trade; 64)
 
 ## Supported toolchains (make variable 'TOOLCHAIN')
 
-- GNU Arm&reg; Embedded Compiler v10.3.1 (`GCC_ARM`) - Default value of `TOOLCHAIN`
+- GNU Arm&reg; Embedded Compiler v11.3.1 (`GCC_ARM`) - Default value of `TOOLCHAIN`
 
 ## Supported kits (make variable 'TARGET')
 
@@ -133,6 +138,11 @@ pip install -r ./proj_btldr_cm0p/scripts/requirements.txt
 **Note:** For MacOS users, latest version of openssl must be installed from homebrew/ports, and "/usr/local/bin" must be in `PATH` before "/usr/bin".
 ```
 brew install openssl
+```
+
+Since MacOs comes with LibraSSL, users also need to execute the following command to make sure openssl will be used while building the project.
+```
+export PATH="/usr/local/opt/openssl@3/bin:$PATH"
 ```
 
 
@@ -251,7 +261,7 @@ The example can be built in two different ways:
 
 - *For production* – Used when firmware testing is complete and the device is ready to be deployed in the field
 
-The steps remain similar for both methods except that during a production build, an additional post-build step is executed to merge the HEX files of all the applications to create a single binary. See [CM0+/CM4 user app post-build steps for production](#cm0cm4-dual-cpu-user-app-post-build-steps-for-production).
+The steps remain similar for both methods except that during a production build, an additional post-build step is executed to merge the HEX files of all the applications to create a single binary. See [CM0+/CM4 dual-CPU user projects: Post-build steps (for production)](#cm0cm4-dual-cpu-user-projects-post-build-steps-for-development).
 
 You need to build and program the projects in the following order. Do not start building the application yet: follow the [Step-by-step instructions](#step-by-step-instructions):
 
@@ -263,7 +273,7 @@ You need to build and program the projects in the following order. Do not start 
 
 4. **Build the blinky project in UPGRADE mode** – A CM0+ binary will be generated on a successful build.
 
-5. **Build and program the FreeRTOS project in UPGRADE mode** – The CM4 binary is generated that integrates the CM0+ binary on a successful build. The DFU UART connections must be done as explained in [Table 7: DFU status LED and UART connections](#cm4-freertos-user-app-implementation). The [DFU Host tool](https://www.infineon.com/dgdl/Infineon-ModusToolbox_Device_Firmware_Update_Host_Tool_(Version_1.1)-Software-v01_00-EN.pdf?fileId=8ac78c8c7e7124d1017ed92bdbb22be3) is used to transfer the image over UART. Once the transfer is complete, the bootloader will find that the upgrade image exists and then either overwrite the primary slot or swap the primary slot with the new image based on the value of `SWAP_UPGRADE`. The blinky and FreeRTOS projects will be running on the CM0+ and CM4 CPUs respectively with debug messages printed on the serial terminal.
+5. **Build and program the FreeRTOS project in UPGRADE mode** – The CM4 binary is generated that integrates the CM0+ binary on a successful build. The DFU UART connections must be done as explained in [Table 7: DFU status LED and UART connections](#cm4-freertos-user-project-implementation). The [DFU Host tool](https://www.infineon.com/dgdl/Infineon-ModusToolbox_Device_Firmware_Update_Host_Tool_(Version_1.1)-Software-v01_00-EN.pdf?fileId=8ac78c8c7e7124d1017ed92bdbb22be3) is used to transfer the image over UART. Once the transfer is complete, the bootloader will find that the upgrade image exists and then either overwrite the primary slot or swap the primary slot with the new image based on the value of `SWAP_UPGRADE`. The blinky and FreeRTOS projects will be running on the CM0+ and CM4 CPUs respectively with debug messages printed on the serial terminal.
 
 
 ### Step-by-step instructions
@@ -280,9 +290,9 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
 
       1. Select the *proj_btldr_cm0p* project in the Project Explorer.
    
-      2. Follow the instructions in this [KBA236748](https://community.infineon.com/t5/Knowledge-Base-Articles/Working-with-multi-project-applications-in-ModusToolbox-3-0-KBA236748/ta-p/393788) to create the **\<Project Name> Program (KitProg3_MiniProg4)** OpenOCD configuration correctly.
+      2. Follow the instructions as mentioned in [KBA236748](https://community.infineon.com/t5/Knowledge-Base-Articles/Working-with-multi-project-applications-in-ModusToolbox-3-0-KBA236748/ta-p/393788) to create the **\<Project Name> Program (KitProg3_MiniProg4)** OpenOCD configuration correctly.
 
-      3. In the **Quick Panel**, scroll down, and click **\<Project Name> Program (KitProg3_MiniProg4)** thus generated.
+      3. In the **Quick Panel**, scroll down, and click **\<Project Name> Program (KitProg3_MiniProg4)**.
 
    </details>
 
@@ -302,17 +312,17 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
 
    </details>
 
-   <details><summary><b>Using CYPRESS&trade; Programmer (for programming only)</b></summary>
+   <details><summary><b>Using Cypress&trade; Programmer (for programming only)</b></summary>
 
      Use the following settings when programming the kit using CYPRESS&trade; Programmer.
      1. Select **Reset chip**.
      2. Deselect **Program Security Data**. (**Note:** When programming eFuse, this should be selected).
-     3. Set **Voltage** to 3.3 V. (**Note:** When programming eFuse, set this to 2.5 V.)
+     3. Set **Voltage** to 3.3 V (**Note:** When programming eFuse, set this to 2.5 V).
      4. Set **Reset Type** as Soft.
      5. Set **SFlash Restrictions** to "Erase/Program USER/TOC/KEY allowed".
      6. Specify the HEX file to be programmed and then click **Connect** and **Program**.
 
-     **Figure 1. CYPRESS&trade; Programmer settings**
+     **Figure 1. Cypress&trade; Programmer settings**
 
       ![CYPRESS Programmer settings](images/cypress-programmer.png)
 
@@ -320,7 +330,7 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
 
    </br>
 
-   After programming, the *bootloader* starts automatically. Confirm that the UART terminal displays the current lifecycle state, access restrictions, status of protection units configuration, and status of the bootloader operation as highlighted in the figure.
+   After programming, the *bootloader* starts automatically. Confirm that the UART terminal displays the current lifecycle state, access restrictions, status of protection units configuration, and status of the bootloader operation as highlighted in the **Figure 2**.
 
    Note that the primary slot does not contain any valid image at this stage.
 
@@ -328,18 +338,18 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
 
    ![](images/booting-with-no-bootable-image.png)
 
-   **Note:** If you do not see any message printed on the UART terminal (assuming that you have the right settings as mentioned in Step 1), it is most likely because of any of the following reasons:
+   **Note:** If you do not see any message printed on the UART terminal (assuming that you have the right settings as mentioned in **Step 1**), it is most likely because of any of the following reasons:
 
    - **SFlash wasn't updated** – Perform an **Erase** using CYPRESS&trade; Programmer to erase the SFlash contents (USER/TOC/KEY). Now **Program** the HEX file to see if it works as expected.
-   - **The validation of the bootloader has failed** – The bootloader image is signed with the RSA private key as part of the post-build steps. Ensure that the correct public key information that pairs with the private key is being used in the *cy_ps_keystorage.c* file. See [Generating a key-pair](#generating-a-key-pair) for more information.
+   - **The validation of the bootloader has failed** – The bootloader image is signed with the RSA private key as part of the post-build steps. Ensure that the correct public key information that pairs with the private key is being used in the *cy_ps_keystorage.c* file. See [Generating a key-pair](#generating-a-key-pair) for more details.
 
    </br>
 
-3. Build the *proj_cm4* project (use one of the options as shown in Step 2 above). All the projects are built during a build. This builds *proj_cm0p* along with *proj_cm4* every time to create the dual-CPU user image (*primary_app.hex*).
+3. Build the *proj_cm4* project (use one of the options as shown in **Step 2**). All the projects are built during a build. This builds *proj_cm0p* along with *proj_cm4* every time to create the dual-CPU user image (*primary_app.hex*).
    
-4. (Skip to step 5 if not using IDE) Create the OpenOCD configuration for programming the hex file by following the steps in this [KBA236748](https://community.infineon.com/t5/Knowledge-Base-Articles/Working-with-multi-project-applications-in-ModusToolbox-3-0-KBA236748/ta-p/393788). Change the executable from *app_combined.hex* to *primary_app.hex* in the configuration options.
+4. (Skip to **Step 5** if not using IDE) Create the OpenOCD configuration for programming the hex file by following the steps in [KBA236748](https://community.infineon.com/t5/Knowledge-Base-Articles/Working-with-multi-project-applications-in-ModusToolbox-3-0-KBA236748/ta-p/393788). Change the executable from *app_combined.hex* to *primary_app.hex* in the configuration options.
 
-5. Program the *proj_cm4* project (use one of the options as shown in Step 2 above). 
+5. Program the *proj_cm4* project (use one of the options as shown in **Step 2**). 
 
       After programming, the *proj_btldr_cm0p* project starts automatically. At this stage, valid user image exists in the primary slot and control is transferred to it if the validation is successful. The UART terminal will display the following message based on the validation status:
 
@@ -359,7 +369,7 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
 
 6. If the user image is running successfully, the LED toggles on the kit to indicate a successful CM0+ startup. The UART terminal displays the successful startup of the CM4 project.
 
-   **Note:** On kits with two LEDs, you should see the second LED glow indicating a successful CM4 startup. See [Table 7: DFU status LED and UART connections](#cm4-freertos-user-app-implementation) for LED pin assignment.
+   **Note:** On kits with two LEDs, you should see the second LED glow indicating a successful CM4 startup. See [Table 7: DFU status LED and UART connections](#cm4-freertos-user-project-implementation) for LED pin assignment.
 
 7. Edit the *common.mk* file in the application root directory to create the UPGRADE image. Change the `IMG_TYPE` variable to UPGRADE.
    ```
@@ -368,7 +378,7 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
 
 8. Build the *proj_cm4* project. The projects have been developed to incorporate minor changes based on whether `IMG_TYPE` is set to `BOOT` or `UPGRADE`. This combines *proj_cm0p* along with *proj_cm4* to create the dual-CPU user image. As part of the post-build steps, it merges the *proj_cm0p* HEX file with the *proj_cm4* HEX and signs the image using *imgtool* to create the user application bundle (*primary_app_UPGRADE.hex*) and then converts it to a *.cyacd2* file required by the DFU Host tool.
 
-9.  Connect an external MiniProg3/4 or KitProg3 programmer/debugger and make the connections required for the DFU UART as explained in [Table 7: DFU status LED and UART connections](#cm4-freertos-user-app-implementation).
+9. Connect an external MiniProg3/4 or KitProg3 programmer/debugger and make the connections required for the DFU UART as explained in [Table 7: DFU status LED and UART connections](#cm4-freertos-user-project-implementation).
 
 10. Open the DFU Host tool (*dfuh-tool*) from *ModusToolbox install directory}/tools_\<version>/dfuh-tool*. Verify that you see the debugger probe. Choose the one that has UART on it as follows:
 
@@ -434,9 +444,9 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
    PRODUCTION=1
    ```
 
-2. Build the *proj_cm4* project. All the projects are built during a build. This builds *proj_cm0p* along with *proj_cm4* every time to create the dual-CPU user image (*primary_app.hex*). Because production build is enabled, a merged HEX file (*production.hex*) of all the three applications is also generated as part of the post-build steps. See [CM0+/CM4 dual-CPU user app post-build steps for production](#cm0cm4-dual-cpu-user-app-post-build-steps-for-production).
+2. Build the *proj_cm4* project. All the projects are built during a **build**. This builds *proj_cm0p* along with *proj_cm4* every time to create the dual-CPU user image (*primary_app.hex*). Because production build is enabled, a merged HEX file (*production.hex*) of all the three applications is also generated as part of the post-build steps. See [CM0+/CM4 dual-CPU user projects: Post-build steps (for production)](#cm0cm4-dual-cpu-user-projects-post-build-steps-for-development).
 
-3. Program the merged HEX file using CYPRESS&trade; Programmer. When programming consecutively, make sure to erase the device first before re-programming:
+3. Program the merged HEX file using Cypress&trade; Programmer. When programming consecutively, make sure to erase the device first before re-programming:
 
    1. Select the correct kit in the **Probe/Kit** option. Specify the *production.hex* file to be programmed and use the following settings:
 
@@ -448,17 +458,17 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
 
       <br>
 
-      **Note:** CYPRESS&trade; Programmer will indicate the current operating voltage at the bottom right as highlighted in the figure. If you do not see 2.5 V even after setting the **Voltage** option to 2.5 V, check if the kit has a VDD select switch / jumper and change it to 2.5 V or 1.8 V - 3.3 V variable voltage.
+      **Note:** Cypress&trade; Programmer will indicate the current operating voltage at the bottom right as highlighted in the figure. If you do not see 2.5 V even after setting the **Voltage** option to 2.5 V, check if the kit has a VDD select switch / jumper and change it to 2.5 V or 1.8 V - 3.3 V variable voltage.
 
       <br>
 
-      **Figure 5. CYPRESS&trade; Programmer settings**
+      **Figure 5. Cpress&trade; Programmer settings**
 
       ![Programmer settings](images/cypress-programmer-production.png)
 
    2. Click **Connect** and then click **Program**.
 
-4. After programming, the *proj_btldr_cm0p* project starts automatically. At this stage, valid user image exists in the primary slot and control is transferred to it if the validation is successful. The UART terminal displays the following message based on the validation status:
+4. After programming, the *proj_btldr_cm0p* project starts automatically. At this stage, valid user image exists in the primary slot and control is transferred to it, if the validation is successful. The UART terminal displays the following message based on the validation status:
 
    - If validation is successful:
 
@@ -502,9 +512,9 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
 
 ## Debugging
 
-You can debug all the examples and step through the code. For multi-project applications, the OpenOCD configurations need to be setup correctly by following the instructions in this [KBA236748](https://community.infineon.com/t5/Knowledge-Base-Articles/Working-with-multi-project-applications-in-ModusToolbox-3-0-KBA236748/ta-p/393788). Edit the existing **\<Application Name> Multi-Core Debug (KitProg3_MiniProg4)** launch group to use the **Debug** configurations of **proj_cm0p** and **proj_cm4** projects. 
+You can debug all the examples and step through the code. For multi-project applications, the OpenOCD configurations need to be setup correctly by following the instructions in the [KBA236748](https://community.infineon.com/t5/Knowledge-Base-Articles/Working-with-multi-project-applications-in-ModusToolbox-3-0-KBA236748/ta-p/393788). Edit the existing **\<Application Name> Multi-Core Debug (KitProg3_MiniProg4)** launch group to use the **Debug** configurations of **proj_cm0p** and **proj_cm4** projects. 
 
-Once created, in the IDE, use the **\<Application Name> Multi-Core Debug (KitProg3_MiniProg4)** configuration in the **Quick Panel**. For more details, see the "Program and debug" section in the Eclipse IDE for ModusToolbox User Guide: *{ModusToolbox install directory}/ide_{version}/docs/mt_ide_user_guide.pdf*.
+Once created in the IDE, use the **\<Application Name> Multi-Core Debug (KitProg3_MiniProg4)** configuration in the **Quick Panel**. For more details, see the "Program and debug" section in the Eclipse IDE for ModusToolbox User Guide: *{ModusToolbox install directory}/ide_{version}/docs/mt_ide_user_guide.pdf*.
 
 ## Design and implementation
 
@@ -519,6 +529,7 @@ This code example is meant to be a companion to the [AN221111 – PSoC&trade; 6 
 - **MCUboot** bootloader functionality for validating and running images
 - **Device Firmware Updates (DFU)** for updating the user image
 - **Crypto** block usage for image validation
+- **RMA Transition** for putting the device in RMA mode
 
 These concepts are covered in detail in the application note.
 
@@ -556,7 +567,7 @@ The flash has been divided into the following sections:
 - **Protected memory** – For storing confidential data or keys. See [Protected storage](#protected-storage) for more information.
 - **Primary slot** – For running the CM0+ and CM4 user projects
 - **Secondary slot** – For storing the new dual-CPU firmware image
-- **Scratch** (Supported only on PSoC&trade;6 2M) – For supporting MCUboot swap-based upgrade operation. See [Swap-based upgrade for PSoC&trade; 6 MCU](#swap-based-upgrade-for-psoctrade-6-mcu) for more information.
+- **Scratch** (Supported only on PSoC&trade;6 2M) – For supporting MCUboot swap-based upgrade operation. See [Swap-based upgrade for PSoC&trade; 6 MCU](#swap-based-upgrade-for-psoc™-6-mcu) for more information.
 
 The flash memory layout is illustrated as follows for different memory variants of PSoC&trade; 62/63:
 
@@ -702,9 +713,9 @@ See [MCUboot design](https://github.com/mcu-tools/mcuboot/blob/v1.8.1-cypress/do
 
 ### Flash map/partition
 
-Figure 14 shows the default flash map or partition used with MCUboot. The partitions need not be contiguous in the memory because it is possible to configure the offset and size of each partition. However, the offset and the size must be aligned to the boundary of a flash row or sector. For PSoC&trade; 6 MCUs, the size of a flash row is 512 bytes. Also, the partition can be in either the internal flash or external flash.
+**Figure 14** shows the default flash map or partition used with MCUboot. The partitions need not be contiguous in the memory because it is possible to configure the offset and size of each partition. However, the offset and the size must be aligned to the boundary of a flash row or sector. For PSoC&trade; 6 MCUs, the size of a flash row is 512 bytes. Also, the partition can be in either the internal flash or external flash.
 
-The memory partition is described or defined through a flash map (a data structure). It is important that the bootloader project and the dual-CPU user projects agree on the flash map. This example uses a shared file (*common.mk*) between the three apps so that they can use the same set of flash map parameters. See [Configuring the flash map](#configuring-the-default-flash-map) for details.
+The memory partition is described or defined through a flash map (a data structure). It is important that the bootloader project and the dual-CPU user projects agree on the flash map. This example uses a shared file (*common.mk*) between the three apps so that they can use the same set of flash map parameters. See [Customizing the flash map](#customizing-the-flash-map) for more details.
 
 **Figure 14. Typical flash map**
 
@@ -1096,9 +1107,9 @@ Programming the eFuses is irreversible and care should be taken to verify the se
 
 To program the eFuse, the following steps should be followed.
 
-1. Open CYPRESS&trade; Programmer. Connect to the kit and click **Erase**. This erases any prior configuration residing on the flash and SFlash.
+1. Open Cypress&trade; Programmer. Connect to the kit and click **Erase**. This erases any prior configuration residing on the flash and SFlash.
 
-2. Build and program the CM0+/CM4 dual-CPU user projects by selecting  either the *primary_app.hex* or *primary_app_boot.hex* file in CYPRESS&trade; Programmer.
+2. Build and program the CM0+/CM4 dual-CPU user projects by selecting  either the *primary_app.hex* or *primary_app_boot.hex* file in Cypress&trade; Programmer.
 
    **Note:** It is important to have the user image programmed before the bootloader is programmed. This is because the bootloader programs the eFuses. If programmed first, the bootloader will lock down the debug ports and the user image can no longer be programmed.
 
@@ -1111,7 +1122,7 @@ To program the eFuse, the following steps should be followed.
 
 5. Clean and build the *proj_btldr_cm0p* project.
 
-6. Open CYPRESS&trade; Programmer and select the *proj_btldr_cm0p.hex* file along with the following settings:
+6. Open Cypress&trade; Programmer and select the *proj_btldr_cm0p.hex* file along with the following settings:
 
    1. Select **Program Security Data**.
    2. Set the voltage to 2.5 V (**Note:** This option isn't visible for all BSPs. In such cases, set the VTARG jumpers to 2.5 V on the kit.)
@@ -1119,17 +1130,17 @@ To program the eFuse, the following steps should be followed.
 
    <br>
 
-   **Note:** CYPRESS&trade; Programmer will indicate the current operating voltage at the bottom right as highlighted in the figure. If you do not see 2.5 V even after setting the **Voltage** option to 2.5 V, check if the kit has a VDD select switch / jumper and change it to 2.5 V or 1.8 V - 3.3 V variable voltage.
+   **Note:** Cypress&trade; Programmer will indicate the current operating voltage at the bottom right as highlighted in the figure. If you do not see 2.5 V even after setting the **Voltage** option to 2.5 V, check if the kit has a VDD select switch / jumper and change it to 2.5 V or 1.8 V - 3.3 V variable voltage.
 
    <br>
 
-   **Figure 20. Programming eFuse using CYPRESS&trade; Programmer**
+   **Figure 20. Programming eFuse using Cypress&trade; Programmer**
 
    ![Programming eFuse using CYPRESS&trade; Programmer](./images/program-efuse.png)
 
 7. Program the kit.
 
-   Once programming is complete, a reset will be executed. If the eFuses are configured to disable the debug ports, CYPRESS&trade; Programmer will not be able to connect to the kit indicating successful locking of the debug ports. The current lifecycle stage will be indicated in the serial terminal.
+   Once programming is complete, a reset will be executed. If the eFuses are configured to disable the debug ports, Cypress&trade; Programmer will not be able to connect to the kit indicating successful locking of the debug ports. The current lifecycle stage will be indicated in the serial terminal.
 
 </details>
 
@@ -1225,6 +1236,54 @@ The names of the files generated can be modified by changing the `SIGN_KEY_FILE_
 
 
 
+## Return Merchandise Authorization (RMA) mode
+This feature demonstrates how to transition the PSoC™ 61/62 MCU from "SECURED"/”SECURED_WITH_DEBUG” to the "RMA" lifecycle stage. The RMA lifecycle stage can be used by customers to return the parts to Infineon for failure analysis.
+
+**CAUTION:** After transitioning the PSoC™ 62 MCU into RMA stage, it cannot be transitioned back into other lifecycle stages.
+
+To transition a device to the RMA stage, you must have access to the following:
+- The device unique ID (12 bytes)
+- Private key that is paired with a public key stored and authenticated in SFlash.
+
+Follow the steps below to put the device in RMA mode
+
+1. Read the device unique ID by running the Security Template code example. When the CM4 code executes, it displays a 12-byte device unique ID stored in the device SFlash on the termimal as shown below
+
+**Figure 23. Device unique ID**
+
+![Device Unique ID](./images/device_unique_id.png)
+
+2.	Generate RMA certificate using the device unique ID mentioned in Step-1 and the your private key paired with the public key stored internally in SFlash. Refer the below steps to generate RMA certificate
+
+      Pre-requisites: Openssl 1.0.2 or higher and gcc 11.3.0 (any version is fine)
+   - Open the `rma_certificate_generation` folder present in .\proj_cm4 directory.
+   - Replace the Public/Private key pair in the `rma_certificate_generation` folder with your public/private key pair present in ./proj_btldr_cm0p/keys. Please use the same existing file names for the keys so that the script works properly. Also, this key pair should be the same that is stored in SFlash public key area used to sign/verify the application
+   - Run Ubuntu shell (any shell that has gcc) from "rma_certificate_generation" folder.
+   - Now, Run `sudo ./generate_cert_script.sh "0x018ba21d" "0x012f2a13" "0x007a030d"`in the shell. `0x018ba21d 012f2a13 007a030d` is the 12-byte unique device ID that is printed as part of proj_cm4 project. This uniquie ID remains unique for each silicon.
+   - After the script completes execution, `certificate.c` file is created in the same folder and should have the certificate details.
+   - Copy the contents of certificate.c file to proj_cm4\main.c file by replacing the existing certificate..
+
+   3. Change the `TRANSITION_TO_RMA` flag from 0 to 1 in ./proj_cm4/Makefile to enable the RMA functionality and make the changes in the code to transition the device to SECURE/SECURE_WITH_DEBUG lifecycle as mentioned in [eFuse programming for debug access restrictions and lifecycle](#efuse-programming-for-debug-access-restrictions-and-lifecycle) section above.
+   4. Once the above steps are followed, build and flash the binary. The device VDDIO0 supply must be at 2.5V while programming the binaries, because the RMA eFuse is to be programmed. (Any programming of eFuse bits requires the VDDIO0 to be 2.5 v). After the device is reset or power cycled, it boots up in SECURE/SECURE WITH DEBUG life cycle mode, displays the lifecycle state on terminal and immediately moves to RMA state.
+
+   **Figure 24. RMA Transition**
+
+   ![RMA successful log](./images/rma_transition_successful.png)
+   5. Once the device successfully enters the RMA mode, we don't see any logs on the shell as the ports are disabled in RMA. Also, the device doesn't connect via Cypress Programmer while in RMA mode.
+   6. In RMA failure case, it prints the syscall failure code. The failure codes are explained in the TRM document.
+
+**Note:** It is upto the customer to erase any sensitive date or proprietary code stored in the device before transition to RMA mode. Erase the flash at least four times to ensure there is no way to detect any residual code. The public key stored in SFlash must remain because it is used to transition to the RMA lifecycle stage and to allow Infineon to open the RMA later.
+
+**Supported Kits**
+
+- [PSoC&trade; 6 Wi-Fi Bluetooth&reg; pioneer kit](https://www.infineon.com/CY8CKIT-062-WIFI-BT) (`CY8CKIT-062-WIFI-BT`)
+- [PSoC&trade; 6 Wi-Fi Bluetooth&reg; prototyping kit](https://www.infineon.com/CY8CPROTO-062-4343W) (`CY8CPROTO-062-4343W`)
+- [PSoC&trade; 62S2 Wi-Fi Bluetooth&reg; pioneer kit](https://www.infineon.com/CY8CKIT-062S2-43012) (`CY8CKIT-062S2-43012`)
+- [PSoC&trade; 62S3 Wi-Fi Bluetooth&reg; prototyping kit](https://www.infineon.com/CY8CPROTO-062S3-4343W) (`CY8CPROTO-062S3-4343W`)
+
+
+After you have performed these steps, you can send the device and certificate.c file to Infineon to allow failure analysis. Note that this certificate is unique to the part for which it was generated.
+
 ## Pre- and post-build steps
 
 ### Bootloader project: Pre-build steps
@@ -1307,7 +1366,7 @@ Tools  | [Eclipse IDE for ModusToolbox&trade; software](https://www.infineon.com
 
 ## Other resources
 
-Infineon provides a wealth of data at www.infineon.com to help you select the right device, and quickly and effectively integrate it into your design.
+Infineon provides a wealth of data at [www.infineon.com](https://www.infineon.com) to help you select the right device, and quickly and effectively integrate it into your design.
 
 For PSoC&trade; 6 MCU devices, see [How to design with PSoC&trade; 6 MCU – KBA223067](https://community.infineon.com/docs/DOC-14644) in the Infineon community.
 
@@ -1315,14 +1374,15 @@ For PSoC&trade; 6 MCU devices, see [How to design with PSoC&trade; 6 MCU – KBA
 
 Document title: *CE234992* – *PSoC&trade; 6 MCU: Security application template*
 
-| Version | Description of Change                                              |
+| Version | Description of change                                              |
 | ------- | -------------------------------------------------------------------|
 | 1.0.0   | New code example                                                   |
 | 2.0.0   | Updated to support ModusToolbox&trade; software v3.0 and BSPs v4.x |
+| 3.0.0   | Add support for RMA
 
 ---------------------------------------------------------
 
-© Cypress Semiconductor Corporation, 2020-2022. This document is the property of Cypress Semiconductor Corporation, an Infineon Technologies company, and its affiliates ("Cypress").  This document, including any software or firmware included or referenced in this document ("Software"), is owned by Cypress under the intellectual property laws and treaties of the United States and other countries worldwide.  Cypress reserves all rights under such laws and treaties and does not, except as specifically stated in this paragraph, grant any license under its patents, copyrights, trademarks, or other intellectual property rights.  If the Software is not accompanied by a license agreement and you do not otherwise have a written agreement with Cypress governing the use of the Software, then Cypress hereby grants you a personal, non-exclusive, nontransferable license (without the right to sublicense) (1) under its copyright rights in the Software (a) for Software provided in source code form, to modify and reproduce the Software solely for use with Cypress hardware products, only internally within your organization, and (b) to distribute the Software in binary code form externally to end users (either directly or indirectly through resellers and distributors), solely for use on Cypress hardware product units, and (2) under those claims of Cypress’s patents that are infringed by the Software (as provided by Cypress, unmodified) to make, use, distribute, and import the Software solely for use with Cypress hardware products.  Any other use, reproduction, modification, translation, or compilation of the Software is prohibited.
+© Cypress Semiconductor Corporation, 2020-2023. This document is the property of Cypress Semiconductor Corporation, an Infineon Technologies company, and its affiliates ("Cypress").  This document, including any software or firmware included or referenced in this document ("Software"), is owned by Cypress under the intellectual property laws and treaties of the United States and other countries worldwide.  Cypress reserves all rights under such laws and treaties and does not, except as specifically stated in this paragraph, grant any license under its patents, copyrights, trademarks, or other intellectual property rights.  If the Software is not accompanied by a license agreement and you do not otherwise have a written agreement with Cypress governing the use of the Software, then Cypress hereby grants you a personal, non-exclusive, nontransferable license (without the right to sublicense) (1) under its copyright rights in the Software (a) for Software provided in source code form, to modify and reproduce the Software solely for use with Cypress hardware products, only internally within your organization, and (b) to distribute the Software in binary code form externally to end users (either directly or indirectly through resellers and distributors), solely for use on Cypress hardware product units, and (2) under those claims of Cypress’s patents that are infringed by the Software (as provided by Cypress, unmodified) to make, use, distribute, and import the Software solely for use with Cypress hardware products.  Any other use, reproduction, modification, translation, or compilation of the Software is prohibited.
 <br>
 TO THE EXTENT PERMITTED BY APPLICABLE LAW, CYPRESS MAKES NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH REGARD TO THIS DOCUMENT OR ANY SOFTWARE OR ACCOMPANYING HARDWARE, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  No computing device can be absolutely secure.  Therefore, despite security measures implemented in Cypress hardware or software products, Cypress shall have no liability arising out of any security breach, such as unauthorized access to or use of a Cypress product. CYPRESS DOES NOT REPRESENT, WARRANT, OR GUARANTEE THAT CYPRESS PRODUCTS, OR SYSTEMS CREATED USING CYPRESS PRODUCTS, WILL BE FREE FROM CORRUPTION, ATTACK, VIRUSES, INTERFERENCE, HACKING, DATA LOSS OR THEFT, OR OTHER SECURITY INTRUSION (collectively, "Security Breach").  Cypress disclaims any liability relating to any Security Breach, and you shall and hereby do release Cypress from any claim, damage, or other liability arising from any Security Breach.  In addition, the products described in these materials may contain design defects or errors known as errata which may cause the product to deviate from published specifications. To the extent permitted by applicable law, Cypress reserves the right to make changes to this document without further notice. Cypress does not assume any liability arising out of the application or use of any product or circuit described in this document. Any information provided in this document, including any sample design information or programming code, is provided only for reference purposes.  It is the responsibility of the user of this document to properly design, program, and test the functionality and safety of any application made of this information and any resulting product.  "High-Risk Device" means any device or system whose failure could cause personal injury, death, or property damage.  Examples of High-Risk Devices are weapons, nuclear installations, surgical implants, and other medical devices.  "Critical Component" means any component of a High-Risk Device whose failure to perform can be reasonably expected to cause, directly or indirectly, the failure of the High-Risk Device, or to affect its safety or effectiveness.  Cypress is not liable, in whole or in part, and you shall and hereby do release Cypress from any claim, damage, or other liability arising from any use of a Cypress product as a Critical Component in a High-Risk Device. You shall indemnify and hold Cypress, including its affiliates, and its directors, officers, employees, agents, distributors, and assigns harmless from and against all claims, costs, damages, and expenses, arising out of any claim, including claims for product liability, personal injury or death, or property damage arising from any use of a Cypress product as a Critical Component in a High-Risk Device. Cypress products are not intended or authorized for use as a Critical Component in any High-Risk Device except to the limited extent that (i) Cypress’s published data sheet for the product explicitly states Cypress has qualified the product for use in a specific High-Risk Device, or (ii) Cypress has given you advance written authorization to use the product as a Critical Component in the specific High-Risk Device and you have signed a separate indemnification agreement.
 <br>
