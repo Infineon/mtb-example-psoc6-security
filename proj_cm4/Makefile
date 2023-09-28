@@ -234,11 +234,11 @@ SIGN_ARGS=sign --header-size $(MCUBOOT_HEADER_SIZE) --pad-header --align 8 -v $(
 # with a header and is marked as confirmed, Product ID is defined to
 # be used for generating CYACD2 upgrade file. 
 ifeq ($(IMG_TYPE), BOOT)
-    DEFINES+=BOOT_IMG
+    DEFINES+=BOOT_IMAGE
     IMG_EXT=_$(IMG_TYPE)
 else 
 ifeq ($(IMG_TYPE), UPGRADE)
-    DEFINES+=UPGRADE_IMG
+    DEFINES+=UPGRADE_IMAGE
     SIGN_ARGS += --pad --confirm
     DFU_PRODUCT_ID=0x01020304
     IMG_EXT=_$(IMG_TYPE)

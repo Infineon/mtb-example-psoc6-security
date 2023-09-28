@@ -65,14 +65,14 @@
 #endif
 
 /* Set LED toggle interval based on image type */
-#if defined(BOOT_IMG)
+#if defined(BOOT_IMAGE)
 #define LED_TOGGLE_INTERVAL_MS         (1000u)
 #define IMG_TYPE                       "BOOT"
-#elif defined(UPGRADE_IMG)
+#elif defined(UPGRADE_IMAGE)
 #define LED_TOGGLE_INTERVAL_MS         (250u)
 #define IMG_TYPE                       "UPGRADE"
 #else
-#error "[UserApp] Please define the image type: BOOT_IMG or UPGRADE_IMG\n"
+#error "[UserApp] Please define the image type: BOOT_IMAGE or UPGRADE_IMAGE\n"
 #endif
 
 /*******************************************************************************

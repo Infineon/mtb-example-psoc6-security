@@ -72,12 +72,12 @@
 #endif
 
 /* Define for image type */
-#ifdef BOOT_IMG
+#ifdef BOOT_IMAGE
 #define IMG_TYPE                       "BOOT"
-#elif defined(UPGRADE_IMG)
+#elif defined(UPGRADE_IMAGE)
 #define IMG_TYPE                       "UPGRADE"
 #else
-#error "[UserApp] Please define the image type: BOOT_IMG or UPGRADE_IMG\n"
+#error "[UserApp] Please define the image type: BOOT_IMAGE or UPGRADE_IMAGE\n"
 #endif
 
 #define DFU_UART_POLL_COUNT (10u)

@@ -34,7 +34,7 @@ The application template also has files and directories that are of importance s
 
 [View this README on GitHub.](https://github.com/Infineon/mtb-example-psoc6-security)
 
-[Provide feedback on this Code Example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzQ5OTIiLCJTcGVjIE51bWJlciI6IjAwMi0zNDk5MiIsIkRvYyBUaXRsZSI6IlBTb0MmdHJhZGU7IDYgTUNVOiBTZWN1cml0eSBhcHBsaWNhdGlvbiB0ZW1wbGF0ZSIsInJpZCI6ImRka2EiLCJEb2MgdmVyc2lvbiI6IjMuMC4wIiwiRG9jIExhbmd1YWdlIjoiRW5nbGlzaCIsIkRvYyBEaXZpc2lvbiI6Ik1DRCIsIkRvYyBCVSI6IklDVyIsIkRvYyBGYW1pbHkiOiJQU09DIn0=)
+[Provide feedback on this Code Example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzQ5OTIiLCJTcGVjIE51bWJlciI6IjAwMi0zNDk5MiIsIkRvYyBUaXRsZSI6IlBTb0MmdHJhZGU7IDYgTUNVOiBTZWN1cml0eSBhcHBsaWNhdGlvbiB0ZW1wbGF0ZSIsInJpZCI6ImRka2EiLCJEb2MgdmVyc2lvbiI6IjMuMC4xIiwiRG9jIExhbmd1YWdlIjoiRW5nbGlzaCIsIkRvYyBEaXZpc2lvbiI6Ik1DRCIsIkRvYyBCVSI6IklDVyIsIkRvYyBGYW1pbHkiOiJQU09DIn0=)
 
 <br>
 
@@ -144,7 +144,7 @@ Since MacOs comes with LibraSSL, users also need to execute the following comman
 ```
 export PATH="/usr/local/opt/openssl@3/bin:$PATH"
 ```
-
+**Note:** This example currently does not work with custom BSP names. If you want to change the BSP name to a non-default value, ensure to update the modified BSP name in common.mk file under relevant sections. Otherwise project creation fails.
 
 ## Using the code example
 
@@ -1379,6 +1379,7 @@ Document title: *CE234992* – *PSoC&trade; 6 MCU: Security application template
 | 1.0.0   | New code example                                                   |
 | 2.0.0   | Updated to support ModusToolbox&trade; software v3.0 and BSPs v4.x |
 | 3.0.0   | Add support for RMA
+| 3.0.1   | Minor source files and README updates
 
 ---------------------------------------------------------
 
