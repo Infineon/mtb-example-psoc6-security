@@ -7,7 +7,7 @@
 #
 ################################################################################
 # \copyright
-# Copyright 2018-2023, Cypress Semiconductor Corporation (an Infineon company)
+# Copyright 2018-2024, Cypress Semiconductor Corporation (an Infineon company)
 # SPDX-License-Identifier: Apache-2.0
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -281,11 +281,7 @@ MCUELFTOOL_LOC=$(CY_MCUELFTOOL_DIR)/bin/cymcuelftool
 SREC_CAT_LOC=$(CY_TOOLS_DIR)/srecord/bin/srec_cat
 
 # Python path definition
-ifeq ($(OS),Windows_NT)
-PYTHON_PATH?=python
-else
-PYTHON_PATH?=python3
-endif
+CY_PYTHON_REQUIREMENT=true
 
 # Custom post-build commands to run.
 # 1. Take a backup of the original hex file (_raw.hex)
@@ -309,14 +305,14 @@ $(MCUELFTOOL_LOC) --merge $(CM0P_BINARY_PATH).elf $(CM4_BINARY_PATH).elf --outpu
 cp -f $(DUAL_APP_HEX_PATH).hex $(DUAL_APP_HEX_PATH)$(IMG_EXT)_raw.hex;\
 rm -f $(DUAL_APP_HEX_PATH).hex;\
 $(CY_ELF_TO_HEX_TOOL) --change-addresses=$(HEADER_OFFSET) $(CY_ELF_TO_HEX_OPTIONS) $(DUAL_APP_HEX_PATH).elf $(DUAL_APP_HEX_PATH)$(IMG_EXT)_unsigned.hex;\
-$(PYTHON_PATH) $(IMGTOOL_PATH) $(SIGN_ARGS) $(DUAL_APP_HEX_PATH)$(IMG_EXT)_unsigned.hex $(DUAL_APP_HEX_PATH).hex; \
+$(CY_PYTHON_PATH) $(IMGTOOL_PATH) $(SIGN_ARGS) $(DUAL_APP_HEX_PATH)$(IMG_EXT)_unsigned.hex $(DUAL_APP_HEX_PATH).hex; \
 cp -f $(DUAL_APP_HEX_PATH).hex $(DUAL_APP_HEX_PATH)$(IMG_EXT).hex;
 
 # For Upgrade images, the following post-build command is required for
 # creating the CYACD2 upgrade file. The hextocyacd2.py script is used
 # for this purpose.
 ifeq ($(IMG_TYPE), UPGRADE)
-POSTBUILD+=$(PYTHON_PATH) $(DFU_HEX2CYACD_SCRIPT) $(DUAL_APP_HEX_PATH)$(IMG_EXT).hex $(DUAL_APP_HEX_PATH)$(IMG_EXT).cyacd2 \
+POSTBUILD+=$(CY_PYTHON_PATH) $(DFU_HEX2CYACD_SCRIPT) $(DUAL_APP_HEX_PATH)$(IMG_EXT).hex $(DUAL_APP_HEX_PATH)$(IMG_EXT).cyacd2 \
            -row=512 -chk=sum -id=$(DFU_PRODUCT_ID) -size=$(MCUBOOT_SLOT_SIZE);
 POSTBUILD+=rm -f $(DUAL_APP_HEX_PATH).hex;
 endif

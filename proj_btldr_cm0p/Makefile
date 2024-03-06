@@ -7,7 +7,7 @@
 #
 ################################################################################
 # \copyright
-# Copyright 2018-2023, Cypress Semiconductor Corporation (an Infineon company)
+# Copyright 2018-2024, Cypress Semiconductor Corporation (an Infineon company)
 # SPDX-License-Identifier: Apache-2.0
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -222,11 +222,7 @@ rm -f $(BINARY_OUT_PATH)_stripped.hex;
 ################################################################################
 
 # Python path definition
-ifeq ($(OS),Windows_NT)
-PYTHON_PATH?=python
-else
-PYTHON_PATH?=python3
-endif
+CY_PYTHON_REQUIREMENT=true
 
 # Output directory
 OUT_DIR=./keys
@@ -256,7 +252,7 @@ rsa_keygen:
 	openssl rsa -in $(OUT_DIR)/$(RSA_PRIV_NAME) -outform PEM -pubout -out $(OUT_DIR)/$(RSA_PUB_NAME)
 
 	# Create C-code ready public key
-	$(PYTHON_PATH) $(RSA_TO_C_PYTHON_SCRIPT) $(OUT_DIR)/$(RSA_PUB_NAME) > $(OUT_DIR)/$(MOD_NAME)
+	$(CY_PYTHON_PATH) $(RSA_TO_C_PYTHON_SCRIPT) $(OUT_DIR)/$(RSA_PUB_NAME) > $(OUT_DIR)/$(MOD_NAME)
 	
 	# Copy the contents of the generated private key into the .pem file
 	cp $(OUT_DIR)/$(RSA_PRIV_NAME) $(OUT_DIR)/$(SIGN_KEY_FILE_RSA).pem
@@ -264,8 +260,8 @@ rsa_keygen:
 # Generate the ECC-P256 public and private key
 ecc_keygen:
 	rm -f $(OUT_DIR)/$(ECC_PRIV_NAME) $(OUT_DIR)/$(ECC_PUB_NAME) $(OUT_DIR)/$(ECC_PUB_NAME_H)
-	$(PYTHON_PATH) $(IMGTOOL_PATH) keygen -k $(OUT_DIR)/$(ECC_PRIV_NAME) -t ecdsa-p256
-	$(PYTHON_PATH) $(IMGTOOL_PATH) getpub -k $(OUT_DIR)/$(ECC_PRIV_NAME) >> $(OUT_DIR)/$(ECC_PUB_NAME)
-	$(PYTHON_PATH) $(IMGTOOL_PATH) getpub -k $(OUT_DIR)/$(ECC_PRIV_NAME) >> $(OUT_DIR)/$(ECC_PUB_NAME_H)
+	$(CY_PYTHON_PATH) $(IMGTOOL_PATH) keygen -k $(OUT_DIR)/$(ECC_PRIV_NAME) -t ecdsa-p256
+	$(CY_PYTHON_PATH) $(IMGTOOL_PATH) getpub -k $(OUT_DIR)/$(ECC_PRIV_NAME) >> $(OUT_DIR)/$(ECC_PUB_NAME)
+	$(CY_PYTHON_PATH) $(IMGTOOL_PATH) getpub -k $(OUT_DIR)/$(ECC_PRIV_NAME) >> $(OUT_DIR)/$(ECC_PUB_NAME_H)
 
 include $(CY_TOOLS_DIR)/make/start.mk
