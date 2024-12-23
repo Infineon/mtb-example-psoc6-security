@@ -189,6 +189,7 @@ void dfu_task(void)
 
     /* Print message on serial terminal */
     printf("%s", message);
+    cyhal_system_delay_ms(1000);
 
     while(1)
     {

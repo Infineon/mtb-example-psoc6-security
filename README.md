@@ -34,11 +34,11 @@ The application template also has files and directories that are of importance s
 
 [View this README on GitHub.](https://github.com/Infineon/mtb-example-psoc6-security)
 
-[Provide feedback on this Code Example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzQ5OTIiLCJTcGVjIE51bWJlciI6IjAwMi0zNDk5MiIsIkRvYyBUaXRsZSI6IlBTb0MmdHJhZGU7IDYgTUNVOiBTZWN1cml0eSBhcHBsaWNhdGlvbiB0ZW1wbGF0ZSIsInJpZCI6ImRka2EiLCJEb2MgdmVyc2lvbiI6IjMuMS4wIiwiRG9jIExhbmd1YWdlIjoiRW5nbGlzaCIsIkRvYyBEaXZpc2lvbiI6Ik1DRCIsIkRvYyBCVSI6IklDVyIsIkRvYyBGYW1pbHkiOiJQU09DIn0=)
+[Provide feedback on this Code Example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzQ5OTIiLCJTcGVjIE51bWJlciI6IjAwMi0zNDk5MiIsIkRvYyBUaXRsZSI6IlBTb0MmdHJhZGU7IDYgTUNVOiBTZWN1cml0eSBhcHBsaWNhdGlvbiB0ZW1wbGF0ZSIsInJpZCI6ImRka2EiLCJEb2MgdmVyc2lvbiI6IjMuMS4xIiwiRG9jIExhbmd1YWdlIjoiRW5nbGlzaCIsIkRvYyBEaXZpc2lvbiI6Ik1DRCIsIkRvYyBCVSI6IklDVyIsIkRvYyBGYW1pbHkiOiJQU09DIn0=)
 
 ## Requirements
 
-- [ModusToolbox&trade;](https://www.infineon.com/modustoolbox) v3.1 or later (tested with v3.2)
+- [ModusToolbox&trade;](https://www.infineon.com/modustoolbox) v3.1 or later (tested with v3.4)
 - Programming language: C
 - openssl 1.0.2 or higher
 - PSoC&trade; 6 board support package (BSP) minimum required version: 4.0.0
@@ -267,11 +267,13 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
 
    </br>
 
-3. Build the *proj_cm4* project (use one of the options as shown in **Step 2**). All the projects are built during a build. This builds *proj_cm0p* along with *proj_cm4* every time to create the dual-CPU user image (*primary_app.hex*).
-   
-4. (Skip to **Step 5** if not using IDE) Create the OpenOCD configuration for programming the hex file by following the steps in [KBA236748](https://community.infineon.com/t5/Knowledge-Base-Articles/Working-with-multi-project-applications-in-ModusToolbox-3-0-KBA236748/ta-p/393788). Change the executable from *app_combined.hex* to *primary_app.hex* in the configuration options.
+3. Build the *proj_cm0p* project (use one of the options as shown in **Step 2**).
 
-5. Program the *proj_cm4* project (use one of the options as shown in **Step 2**). 
+4. Build the *proj_cm4* project (use one of the options as shown in **Step 2**). All the projects are built during a build. This builds *proj_cm0p* along with *proj_cm4* every time to create the dual-CPU user image (*primary_app.hex*).
+   
+5. (Skip to **Step 6** if not using IDE) Create the OpenOCD configuration for programming the hex file by following the steps in [KBA236748](https://community.infineon.com/t5/Knowledge-Base-Articles/Working-with-multi-project-applications-in-ModusToolbox-3-0-KBA236748/ta-p/393788). Change the executable from *app_combined.hex* to *primary_app.hex* in the configuration options.
+
+6. Program the *proj_cm4* project (use one of the options as shown in **Step 2**). Select *primary_app.hex* while using Cypress&trade; Programmer.
 
       After programming, the *proj_btldr_cm0p* project starts automatically. At this stage, valid user image exists in the primary slot and control is transferred to it if the validation is successful. The UART terminal will display the following message based on the validation status:
 
@@ -289,34 +291,34 @@ The *proj_btldr_cm0p* project design is based on MCUboot, which uses the [imgtoo
 
    **Note that the secondary slot does not contain any valid image at this stage.**
 
-6. If the user image is running successfully, the LED toggles on the kit to indicate a successful CM0+ startup. The UART terminal displays the successful startup of the CM4 project.
+7. If the user image is running successfully, the LED toggles on the kit to indicate a successful CM0+ startup. The UART terminal displays the successful startup of the CM4 project.
 
    **Note:** On kits with two LEDs, you should see the second LED glow indicating a successful CM4 startup. See [Table 7: DFU status LED and UART connections](#cm4-freertos-user-project-implementation) for LED pin assignment.
 
-7. Edit the *common.mk* file in the application root directory to create the UPGRADE image. Change the `IMG_TYPE` variable to UPGRADE.
+8. Edit the *common.mk* file in the application root directory to create the UPGRADE image. Change the `IMG_TYPE` variable to UPGRADE.
    ```
    IMG_TYPE ?= UPGRADE
    ```
 
-8. Build the *proj_cm4* project. The projects have been developed to incorporate minor changes based on whether `IMG_TYPE` is set to `BOOT` or `UPGRADE`. This combines *proj_cm0p* along with *proj_cm4* to create the dual-CPU user image. As part of the post-build steps, it merges the *proj_cm0p* HEX file with the *proj_cm4* HEX and signs the image using *imgtool* to create the user application bundle (*primary_app_UPGRADE.hex*) and then converts it to a *.cyacd2* file required by the DFU Host tool.
+9. Build the *proj_cm4* project. The projects have been developed to incorporate minor changes based on whether `IMG_TYPE` is set to `BOOT` or `UPGRADE`. This combines *proj_cm0p* along with *proj_cm4* to create the dual-CPU user image. As part of the post-build steps, it merges the *proj_cm0p* HEX file with the *proj_cm4* HEX and signs the image using *imgtool* to create the user application bundle (*primary_app_UPGRADE.hex*) and then converts it to a *.cyacd2* file required by the DFU Host tool.
 
-9. Connect an external MiniProg3/4 or KitProg3 programmer/debugger and make the connections required for the DFU UART as explained in [Table 7: DFU status LED and UART connections](#cm4-freertos-user-project-implementation).
+10. Connect an external MiniProg3/4 or KitProg3 programmer/debugger and make the connections required for the DFU UART as explained in [Table 7: DFU status LED and UART connections](#cm4-freertos-user-project-implementation).
 
-10. Open the DFU Host tool (*dfuh-tool*) from *ModusToolbox install directory}/tools_\<version>/dfuh-tool*. Verify that you see the debugger probe. Choose the one that has UART on it as follows:
+11. Open the DFU Host tool (*dfuh-tool*) from *ModusToolbox install directory}/tools_\<version>/dfuh-tool*. Verify that you see the debugger probe. Choose the one that has UART on it as follows:
 
    ![DFU Host tool UART](./images/dfuh-operation.png)
 
-11. Select the *.cyacd2* file from the build output and click **Program**. The operation should take a few minutes to complete.
+12. Select the *.cyacd2* file from the build output and click **Program**. The operation should take a few minutes to complete.
 
-12. Once complete, the image validation status is displayed. If validation is successful, a software reset is initiated to boot it into the new image as follows. Else, the upgrade is aborted.
+13. Once complete, the image validation status is displayed. If validation is successful, a software reset is initiated to boot it into the new image as follows. Else, the upgrade is aborted.
 
     ![DFU upgrade](./images/dfu-firmware-update.png)
 
     Observe that the blinky LED is now blinking faster (every 250 ms) and the debug logs indicate the upgrade image being run.
 
-13. Once the working of the bootloader and user projects has been tested, you can blow the eFuses to transition from NORMAL to SECURE lifecycle mode for further testing. See [eFuse programming for debug access restrictions and lifecycle](#efuse-programming-for-debug-access-restrictions-and-lifecycle).
+14. Once the working of the bootloader and user projects has been tested, you can blow the eFuses to transition from NORMAL to SECURE lifecycle mode for further testing. See [eFuse programming for debug access restrictions and lifecycle](#efuse-programming-for-debug-access-restrictions-and-lifecycle).
 
-14. Once the device is working as expected in SECURE lifecycle mode, proceed to [Step-by-step instructions for production build](#step-by-step-instructions) to program multiple devices at production level.
+15. Once the device is working as expected in SECURE lifecycle mode, proceed to [Step-by-step instructions for production build](#step-by-step-instructions) to program multiple devices at production level.
 
 </details>
 
@@ -1310,6 +1312,7 @@ Document title: *CE234992* – *PSoC&trade; 6 MCU: Security application template
 | 3.0.0   | Add support for RMA
 | 3.0.1   | Minor source files and README updates
 | 3.1.0   | Updated to support ModusToolbox&trade; v3.2
+| 3.1.1   | Minor README Updates
 <br> 
 
 All referenced product or service names and trademarks are the property of their respective owners.
