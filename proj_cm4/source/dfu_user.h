@@ -168,9 +168,9 @@ extern "C" {
         * These variables are defined in the linker scripts, the values of their addresses define
         * corresponding applications start address and length.
         */
-        extern uint8_t __cy_app0_verify_start;
+        extern uint32_t __cy_app0_verify_start;
         extern uint8_t __cy_app0_verify_length;
-        extern uint8_t __cy_app1_verify_start;
+        extern uint32_t __cy_app1_verify_start;
         extern uint8_t __cy_app1_verify_length;
 
         #define CY_DFU_APP0_VERIFY_START       ( (uint32_t)&__cy_app0_verify_start )
